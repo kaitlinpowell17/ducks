@@ -1,0 +1,72 @@
+
+---
+title: "Map"
+---
+
+```{r}
+#| message: false
+library(tidyverse)
+library(sf)
+library(rnaturalearth)
+```
+
+```{r}
+#| cache: true
+mallards <- read_csv(
+  "data/mallards.csv",
+  col_types = cols(
+    timestamp = col_datetime(format = "%Y-%m-%d %H:%M:%S")
+  )
+) |>
+  mutate(
+    month = month(timestamp, label = TRUE, abbr = FALSE),
+    month_num = month(timestamp),
+    year = year(timestamp),
+    season = factor(
+      case_when(
+        month_num %in% 3:5 ~ "Spring",
+        month_num %in% 6:8 ~ "Summer",
+        month_num %in% 9:11 ~ "Autumn",
+        TRUE ~ "Winter"
+      ),
+      levels = c("Spring", "Summer", "Autumn", "Winter")
+    )
+  )
+
+write_rds(mallards, "data/mallards.rds")
+```
+
+```{r}
+mallards |>
+  count(duck_id, sort = TRUE)
+```
+
+```{r}
+mallards |>
+  summarize(
+    minimum_latitude = min(lat, na.rm = TRUE),
+    maximum_latitude = max(lat, na.rm = TRUE),
+    minimum_longitude = min(long, na.rm = TRUE),
+    maximum_longitude = max(long, na.rm = TRUE)
+  )
+```
+
+```{r}
+mallards_region <- mallards |>
+  filter(between(lat, 47, 55), between(long, 8, 25))
+
+countries <- ne_countries(scale = "medium", returnclass = "sf")
+
+ggplot() +
+  geom_sf(data = countries, fill = "gray95", color = "gray70") +
+  geom_point(
+    data = mallards_region,
+    aes(x = long, y = lat, color = duck_id),
+    alpha = 0.5,
+    size = 0.8
+  ) +
+  coord_sf(xlim = c(8, 25), ylim = c(47, 55), expand = FALSE) +
+  labs(color = "Individual duck") +
+  theme_minimal()
+```
+
