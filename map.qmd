@@ -13,10 +13,7 @@ library(rnaturalearth)
 ```{r}
 #| cache: true
 mallards <- read_csv(
-  "data/mallards.csv",
-  col_types = cols(
-    timestamp = col_datetime(format = "%Y-%m-%d %H:%M:%S")
-  )
+  "data/mallards.csv"
 ) |>
   mutate(
     month = month(timestamp, label = TRUE, abbr = FALSE),
